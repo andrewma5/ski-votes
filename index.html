@@ -149,6 +149,7 @@ details[open] summary::after{content:"–"}
 .step .hint{color:var(--muted);font-size:14px;margin:0 0 12px}
 .sl{display:grid;grid-template-columns:92px 1fr 48px;align-items:center;gap:12px;margin:6px 0}
 .sl span{font-weight:600}
+.pts{margin:10px 0 0;font-size:14px;color:var(--amber)}.pts.ok{color:var(--bid)}
 .sl output{font-family:var(--font-mono);text-align:right;color:var(--ice)}
 input[type=range]{width:100%;accent-color:var(--ice)}
 .picks{display:grid;gap:8px}
@@ -214,8 +215,9 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding:20px 0 48px;colo
   <div class="cols">
     <div class="card">
       <div class="step"><span class="n">1</span><div>
-        <h3>Rate the mountains</h3><p class="hint">0 = pass, 10 = all in.</p>
+        <h3>Split 10 points across the mountains</h3><p class="hint">Put them where you want to go. All 10 on one is fine.</p>
         <div id="sliders"></div>
+        <p class="pts" id="ptsLeft"></p>
       </div></div>
       <div class="step"><span class="n">2</span><div>
         <h3>Your house picks</h3><p class="hint">Choose one per mountain with the Pick button on each house above.</p>
@@ -361,7 +363,7 @@ const EXTRA={
  BLY:{map:"https://www.belleayre.com/the-mountain/trail-map",tickets:"https://www.belleayre.com/tickets/lift-tickets/",short:"Best fit for our level",
    why:["Long, wide groomed blues you can lap all day","Gentle first blacks and a separate warm-up area","Cheapest of the three, lighter crowds than Hunter"],
    watch:["Quiet après; dinner and drinks are in Phoenicia","Weekend tickets are online only and can sell out"]},
- HNT:{map:"https://www.huntermtn.com/the-mountain/about-the-mountain/trail-map.aspx",tickets:"https://www.huntermtn.com/plan-your-trip/lift-access/tickets.aspx",short:"Best scene, harder terrain",
+ HNT:{map:"https://www.huntermtn.com/-/aemasset/sitecore/hunter/maps/winter-2025-2026/20251122_HU_winter-trail_map_001.pdf",tickets:"https://www.huntermtn.com/plan-your-trip/lift-access/tickets.aspx",short:"Best scene, harder terrain",
    why:["Liveliest après and youngest crowd","Closest drive and the best-value house we found","Refundable lift tickets"],
    watch:["Weekend crowds and long lift lines","Blacks are steep and icy, a big jump from low blues"]},
  WND:{map:"https://www.windhammountainclub.com/maps/",tickets:"https://www.windhammountainclub.com/lift-tickets/",short:"Most polished, most expensive",
@@ -372,7 +374,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pp=h=>Math.round(h.price/N);
 const fmt=n=>"$"+n.toLocaleString("en-US");
-let state={conv:{BLY:7,HNT:5,WND:3},house:{BLY:"chalet",HNT:"lakeview",WND:"hottub"},limit:600,risk:"small",gear:"rent",tags:[],nick:"",memo:""};
+let state={conv:{BLY:5,HNT:3,WND:2},house:{BLY:"chalet",HNT:"lakeview",WND:"hottub"},limit:600,risk:"small",gear:"rent",tags:[],nick:"",memo:""};
 let cur="BLY",votes=[],db=null,user=null,myId=null,canWrite=true,sentOnce=false,names={};
 
 
@@ -436,8 +438,14 @@ function renderPros(){
 function pct(c){const s=R.reduce((a,r)=>a+(+c[r.id]||0),0);const o={};R.forEach(r=>o[r.id]=s?Math.round(100*(+c[r.id]||0)/s):0);return o}
 function renderSliders(){
   $("#sliders").innerHTML=R.map(r=>`<div class="sl"><span>${r.name}</span><input type="range" id="c-${r.id}" min="0" max="10" step="1" value="${state.conv[r.id]}" aria-label="${r.name} rating"><output id="o-${r.id}">${state.conv[r.id]}</output></div>`).join("");
-  R.forEach(r=>$("#c-"+r.id).oninput=e=>{state.conv[r.id]=+e.target.value;$("#o-"+r.id).textContent=e.target.value;dirty()});
+  R.forEach(r=>$("#c-"+r.id).oninput=e=>{
+    const others=R.filter(x=>x.id!==r.id).reduce((a,x)=>a+state.conv[x.id],0);
+    let v=+e.target.value; if(v+others>10){v=10-others;e.target.value=v}
+    state.conv[r.id]=v;$("#o-"+r.id).textContent=v;updLeft();dirty()});
+  updLeft();
 }
+function ptsLeft(){return 10-R.reduce((a,r)=>a+state.conv[r.id],0)}
+function updLeft(){const n=ptsLeft(),el=$("#ptsLeft");if(!el)return;el.textContent=n===0?"All 10 points placed":`${n} point${n===1?"":"s"} left to place`;el.className="pts"+(n===0?" ok":"")}
 function renderPicks(){
   $("#picks").innerHTML=R.map(r=>{const h=r.houses.find(x=>x.k===state.house[r.id]);return `<div><span>${r.name}</span><b style="flex:1">${h?h.name:"—"}</b><em>${h?fmt(pp(h)):""}</em></div>`}).join("");
 }
@@ -485,7 +493,7 @@ async function renderBook(){
 }
 
 function ticketText(){
-  const L=[`Ski ticket${state.nick?" · "+state.nick:""}`,"Ratings: "+R.map(r=>r.name+" "+state.conv[r.id]+"/10").join(", ")];
+  const L=[`Ski ticket${state.nick?" · "+state.nick:""}`,"Points: "+R.map(r=>r.name+" "+state.conv[r.id]).join(", ")+" (of 10)"];
   R.forEach(r=>{const h=r.houses.find(x=>x.k===state.house[r.id]);L.push(`${r.name} house: ${h?h.name+" ("+fmt(pp(h))+"/pp)":"none"}`)});
   L.push(`Max all-in: ${fmt(state.limit)}/pp`,`Black diamond: ${RISK[state.risk]}`);
   if(state.tags.length)L.push("Wants: "+state.tags.map(t=>TAGS.find(x=>x[0]===t)[1]).join(", "));
@@ -510,6 +518,7 @@ async function loadVotes(){
 $("#sendBtn").onclick=async()=>{
   if(!live){setStatus("Voting isn't connected yet. Use Copy as text for now.","err");return}
   if(!state.nick.trim()){setStatus("Add your name first.","err");$("#nick").focus();return}
+  if(ptsLeft()!==0){setStatus(`Place all 10 points first (${ptsLeft()} left).`,"err");return}
   $("#sendBtn").disabled=true;setStatus("Sending…");
   const body={conv:{...state.conv},house:{...state.house},limit:state.limit,risk:state.risk,tags:[...state.tags],nick:state.nick.trim().slice(0,40),memo:state.memo.trim().slice(0,400),at:new Date().toISOString()};
   try{
