@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catskills Ski Book '27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: three levels only. 1) pick a mountain (big cards), 2) its prospectus (headline numbers, why/watch-out, houses), 3) your ticket and the live book. Secondary detail lives in disclosures. Single dark world: night slate, ice accent, amber for the desk's pick. */
+:root{
+  --bg:#0c131d;
+  --panel:#121c29;
+  --raise:#172435;
+  --line:#243448;
+  --ink:#eef3f9;
+  --muted:#8fa0b4;
+  --ice:#8fd3ff;
+  --amber:#ffbe5c;
+  --bid:#46d39a;
+  --ask:#ff7b88;
+  --font-display:"Archivo",system-ui,sans-serif;
+  --font-body:"Manrope",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55}
+a{color:var(--ice)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ice);outline-offset:3px;border-radius:8px}
+h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.label{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+section{margin-top:56px}
+.sec-title{display:grid;gap:6px;margin-bottom:20px}
+.sec-title h2{font-size:28px;font-weight:800}
+.sec-title p{margin:0;color:var(--muted);max-width:60ch}
+
+/* tape */
+.tape{border-bottom:1px solid var(--line);background:#09101a;overflow:hidden;white-space:nowrap}
+.tape-inner{display:inline-flex;gap:40px;padding:8px 0;animation:scroll 40s linear infinite;font-family:var(--font-mono);font-size:12.5px;color:var(--muted)}
+.tape b{color:var(--ink);font-weight:600}.tape .up{color:var(--bid)}.tape .dn{color:var(--ask)}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.tape-inner{animation:none}}
+
+/* header */
+header{padding:48px 0 0;display:grid;gap:14px}
+header h1{font-size:clamp(36px,6vw,60px);font-weight:800;line-height:1.02}
+header p{margin:0;color:var(--muted);font-size:17px;max-width:54ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:6px;font-size:14px;color:var(--muted)}
+.facts b{color:var(--ink);font-weight:600}
+.cta{display:inline-flex;gap:10px;margin-top:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--ice);color:#06223a;border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer;text-decoration:none;font-size:15px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:#3d5673}
+.btn.sm{padding:8px 13px;font-size:14px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* mountain picker */
+.picker{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mt{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+.mt:hover{transform:translateY(-2px);border-color:#3d5673}
+.mt[aria-selected="true"]{border-color:var(--ice);box-shadow:0 0 0 1px var(--ice) inset}
+.mt .art{height:120px;overflow:hidden}.mt .art svg{width:100%;height:100%;display:block}
+.mt .b{padding:16px 18px 18px;display:grid;gap:6px}
+.mt .top{display:flex;justify-content:space-between;align-items:center}
+.mt h3{font-size:22px;font-weight:800}
+.mt .price{font-size:14px;color:var(--muted)}
+.mt .price b{font-family:var(--font-mono);font-size:20px;color:var(--ink);font-weight:600}
+.tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
+.tag.pick{color:var(--amber)}.tag.cheap{color:var(--bid)}.tag.prem{color:#c3b2ff}
+@media (max-width:760px){.picker{grid-template-columns:1fr}.mt .art{height:90px}}
+
+/* prospectus */
+.pros{background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;margin-top:20px}
+.hero{position:relative;height:230px}
+.hero svg{display:block;width:100%;height:100%}
+.hero .cap{position:absolute;left:28px;right:28px;bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.hero h2{font-size:clamp(32px,5vw,46px);font-weight:800;text-shadow:0 2px 20px #000a}
+.hero .where{font-size:14px;color:#dbe6f2;text-shadow:0 1px 10px #000c}
+.pb{padding:28px;display:grid;gap:32px}
+.headline{display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center}
+.big small{display:block}
+.big b{font-family:var(--font-mono);font-size:44px;font-weight:600;line-height:1}
+.big span{color:var(--muted);font-size:15px}
+.mini{display:flex;gap:28px;flex-wrap:wrap}
+.mini div{display:grid}
+.mini b{font-family:var(--font-mono);font-size:18px;font-weight:500}
+.thesis{font-size:18px;line-height:1.5;max-width:58ch;margin:0;color:#d9e3ee}
+@media (max-width:760px){.headline{grid-template-columns:1fr}}
+.why{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.why .case{background:var(--raise);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.why h3{font-size:13px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.why .bull h3{color:var(--bid)}.why .bear h3{color:var(--ask)}
+.why h3 i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.why ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.why li{padding-left:16px;position:relative;color:#d0dbe7}
+.why li::before{content:"";position:absolute;left:0;top:.7em;width:6px;height:1px;background:var(--muted)}
+@media (max-width:760px){.why{grid-template-columns:1fr}}
+details{border-top:1px solid var(--line);padding-top:16px}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--font-mono);color:var(--muted);font-size:18px}
+details[open] summary::after{content:"–"}
+.more{display:grid;gap:18px;padding-top:16px}
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.days b{font-family:var(--font-mono);font-size:12px;color:var(--ice);letter-spacing:.08em;text-transform:uppercase}
+.days p{margin:4px 0 0;color:#c9d5e3;font-size:14.5px}
+@media (max-width:760px){.days{grid-template-columns:1fr}}
+.evs{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:14.5px;color:#c9d5e3}
+.evs b{font-family:var(--font-mono);font-size:12px;color:var(--amber);margin-right:8px}
+
+/* houses */
+.hh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hh h3{font-size:22px;font-weight:800}
+.hh p{margin:0;color:var(--muted);font-size:14px}
+.houses{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.house{background:var(--raise);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.house.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.house svg{display:block;width:100%;height:120px}
+.house .hb{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.house .tier{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.house .tier.pick{color:var(--amber)}
+.house h4{font-size:16.5px;font-weight:800;line-height:1.25}
+.house .meta{font-size:13.5px;color:var(--muted)}
+.house .price{margin-top:8px;display:flex;align-items:baseline;gap:6px}
+.house .price b{font-family:var(--font-mono);font-size:24px;font-weight:600}
+.house .price span{color:var(--muted);font-size:13px}
+.house .acts{margin-top:auto;padding-top:12px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.pickbtn{background:transparent;border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13.5px;font-weight:600;cursor:pointer}
+.pickbtn:hover{border-color:var(--amber)}
+.house.on .pickbtn{background:var(--amber);color:#2a1a00;border-color:var(--amber)}
+.ext{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.ext:hover{text-decoration:underline}
+
+/* ticket */
+.cols{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px}
+.step{display:grid;grid-template-columns:30px 1fr;gap:14px;padding:20px 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0;padding-top:4px}
+.step .n{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+.step h3{font-size:17px;margin-bottom:4px}
+.step .hint{color:var(--muted);font-size:14px;margin:0 0 12px}
+.sl{display:grid;grid-template-columns:92px 1fr 48px;align-items:center;gap:12px;margin:6px 0}
+.sl span{font-weight:600}
+.sl output{font-family:var(--font-mono);text-align:right;color:var(--ice)}
+input[type=range]{width:100%;accent-color:var(--ice)}
+.picks{display:grid;gap:8px}
+.picks div{display:flex;justify-content:space-between;gap:12px;font-size:14.5px}
+.picks span{color:var(--muted);min-width:80px}
+.picks em{font-style:normal;font-family:var(--font-mono);color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:8px 13px;cursor:pointer;font-size:14px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:#1d3a57;color:#fff}
+.sub-l{font-size:14px;color:var(--muted);margin:14px 0 8px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--ice);background:#1d3a57;color:#fff}
+input[type=text],textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:64px;resize:vertical;margin-top:10px}
+.send{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.status{font-size:13.5px;color:var(--muted)}
+.status.ok{color:var(--bid)}.status.err{color:var(--ask)}
+
+/* book */
+.lead{display:grid;gap:4px;margin-bottom:18px}
+.lead b{font-family:var(--font-display);font-size:26px}
+.bar{display:grid;grid-template-columns:92px 1fr 44px;gap:12px;align-items:center;margin:8px 0;font-size:14.5px}
+.bar .t{height:10px;background:var(--bg);border-radius:999px;overflow:hidden}
+.bar .t i{display:block;height:100%;background:var(--ice);border-radius:999px;transition:width .4s}
+.bar output{font-family:var(--font-mono);text-align:right;color:var(--muted)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px}
+.kv span{color:var(--muted)}
+.kv b{font-weight:600;text-align:right}
+.blk{margin-top:22px}
+.blk .label{display:block;margin-bottom:6px}
+.who{display:flex;flex-wrap:wrap;gap:6px}
+.who span{font-size:13.5px;border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+.empty{color:var(--muted)}
+.sealed{border:1px dashed var(--line);border-radius:14px;padding:22px;display:grid;gap:8px}
+.sealed b{font-family:var(--font-display);font-size:20px}
+.sealed p{margin:0;color:var(--muted)}
+.ghostp{color:var(--muted);letter-spacing:2px}
+footer{margin-top:64px;border-top:1px solid var(--line);padding:20px 0 48px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="tape" aria-hidden="true"><div class="tape-inner" id="tape"></div></div>
+
+<div class="wrap">
+<header>
+  <span class="label">Weekend book · Jan 22–24, 2027</span>
+  <h1>Catskills ski trip</h1>
+  <p>Three mountains are on the table. Look through each one, then send your ticket so we can book.</p>
+  <div class="facts"><span><b>Fri night</b> → <b>Sun evening</b></span><span><b>6</b> people</span><span><b>~2.5–3 hr</b> drive from NYC</span></div>
+  <div class="cta"><a class="btn" href="#vote">Send your ticket</a><a class="btn ghost" href="#mountains">See the mountains</a></div>
+</header>
+
+<section id="mountains" aria-labelledby="m-h">
+  <div class="sec-title"><span class="label">Step 1 · Compare</span><h2 id="m-h">The mountains</h2><p>All-in per person = 2-day lift ticket + rentals (everyone's renting) + the desk's pick house, split 6 ways.</p></div>
+  <div class="picker" role="tablist" id="picker"></div>
+  <article class="pros" id="pros" aria-live="polite"></article>
+</section>
+
+<section id="vote" aria-labelledby="v-h">
+  <div class="sec-title"><span class="label">Step 2 · Vote</span><h2 id="v-h">Your ticket</h2><p>Takes about a minute. Everyone's votes stay hidden until you send yours.</p></div>
+  <div class="cols">
+    <div class="card">
+      <div class="step"><span class="n">1</span><div>
+        <h3>Rate the mountains</h3><p class="hint">0 = pass, 10 = all in.</p>
+        <div id="sliders"></div>
+      </div></div>
+      <div class="step"><span class="n">2</span><div>
+        <h3>Your house picks</h3><p class="hint">Choose one per mountain with the Pick button on each house above.</p>
+        <div class="picks" id="picks"></div>
+      </div></div>
+      <div class="step"><span class="n">3</span><div>
+        <h3>Your limits</h3>
+        <label class="sub-l" for="limit" style="margin-top:0">Max all-in per person: <b class="num" id="limitOut" style="color:var(--ink)">$600</b></label>
+        <input type="range" id="limit" min="400" max="900" step="25" value="600">
+        <span class="sub-l">Black diamond?</span>
+        <div class="seg" id="risk"><button type="button" data-v="flat">Blues only</button><button type="button" data-v="small">Maybe one run</button><button type="button" data-v="long">Send it</button></div>
+      </div></div>
+      <div class="step"><span class="n">4</span><div>
+        <h3>What matters to you</h3><p class="hint">Pick any.</p>
+        <div class="chips" id="tags"></div>
+      </div></div>
+      <div class="step"><span class="n">5</span><div>
+        <h3>Send it</h3>
+        <label class="sub-l" for="nick" style="margin-top:0">Your name</label>
+        <input type="text" id="nick" maxlength="40" placeholder="So the group knows it's you">
+        <textarea id="memo" maxlength="400" placeholder="Anything else? (optional)" aria-label="Optional note"></textarea>
+        <div class="send" style="margin-top:14px"><button class="btn" id="sendBtn" type="button">Send ticket</button><button class="btn ghost sm" id="copyBtn" type="button">Copy as text</button></div>
+        <p class="status" id="status" style="margin:10px 0 0">Connecting…</p>
+      </div></div>
+    </div>
+    <div class="card" aria-labelledby="b-h">
+      <span class="label" id="bookSub">The book · live</span>
+      <h2 id="b-h" style="font-size:24px;font-weight:800;margin:6px 0 18px">Where the group is leaning</h2>
+      <div id="book"><p class="empty">No tickets yet. Be the first.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>Prices checked Nov 15, 2026: lift tickets on each resort's site, houses on Airbnb for 6 guests, Jan 22–24, fees included. Houses book up and prices move. Windham rental prices are an estimate.</footer>
+</div>
+
+<script>
+
+const R = [
+ {id:"BLY", name:"Belleayre", where:"Highmount, NY · Ulster County", ticket:244, rent:120, rentNote:"$58–65 day 1 + $53–59 day 2, helmet incl.",
+  badge:["pick","Desk pick"], sky:["#20365a","#f2a77a"], ridge:["#3c5576","#2b4060","#1b2b40"],
+  thesis:"The best fit for a low-blue group. Long, wide cruisers top to bottom, gentle first blacks, and the lowest price of the big three.",
+  stats:[["2-day lift",'$244'],["Rentals","~$120"],["Drive","2h45"],["Summit","3,429 ft"],["Vertical","1,404 ft"],["Trails","~60"]],
+  bull:["The most long groomed blues in the Catskills, so you can lap all day without stress","Highest summit in the Catskills, which usually means better snow","A separate lower area of greens for warming up","State-run: cheaper and less crowded than Hunter"],
+  bear:["Quiet après. The base area is low-key, so dinner and drinks happen in Phoenicia","Weekend tickets and rentals are online only and can sell out","Last stretch of the drive (Rt 28) is dark mountain road"],
+  path:[["Fri","Leave the city 6–7 PM, groceries in Kingston, at the house by ~10."],["Sat","Rentals and first chair by 8:30. Greens to warm up, then upper-mountain blues all day."],["Sun","Hit the black first thing while it's groomed. Last run ~2:30, on the road by 3:30."]],
+  events:[["TBA","Winter Festival Week is usually late January"],["Feb 5–7","Catskills Pride Ski Weekend (not our weekend)"]],
+  houses:[
+   {k:"barn",kind:"barn",name:"Lakefront barn",town:"Big Indian",tier:"Value",br:3,ba:"1",beds:5,rating:"4.92",rev:107,price:600,feat:"Private lakefront, mountain views",fx:["lake"],url:"https://www.airbnb.com/rooms/1051400127563108894"},
+   {k:"cottage",kind:"cottage",name:"1890 cottage",town:"Phoenicia",tier:"Value",br:4,ba:"2",beds:5,rating:"4.93",rev:227,price:711,feat:"Fireplace and fire pit, walk to town. ~20 min to the mountain",fx:["fire"],url:"https://www.airbnb.com/rooms/2177942"},
+   {k:"chalet",kind:"chalet",name:"Ski-in/ski-out chalet",town:"Fleischmanns",tier:"Desk pick",pick:true,br:3,ba:"2.5",beds:5,rating:"4.92",rev:64,price:772,feat:"Listed as ski-in/ski-out, waterfront, fire pit. Confirm access with host",fx:["fire","lift"],url:"https://www.airbnb.com/rooms/50242561"},
+   {k:"sauna",kind:"cabin",name:"5-acre cabin with sauna",town:"Big Indian",tier:"Step up",br:3,ba:"2",beds:5,rating:"4.96",rev:306,price:1007,feat:"Sauna, fire pit, total privacy",fx:["sauna","fire"],url:"https://www.airbnb.com/rooms/22437491"},
+   {k:"vaulted",kind:"modern",name:"Vaulted-ceiling home",town:"Big Indian",tier:"Splurge",br:4,ba:"4.5",beds:5,rating:"4.97",rev:197,price:1725,feat:"Vaulted ceilings, fireplace, a bathroom almost each",fx:["fire"],url:"https://www.airbnb.com/rooms/18367170"}
+  ]},
+ {id:"HNT", name:"Hunter", where:"Hunter, NY · Greene County", ticket:246, rent:115, rentNote:"~$57/day sport package; The Pro Ski and Ride in town is cheaper",
+  badge:["cheap","Cheapest"], sky:["#2a1f45","#ff8f6b"], ridge:["#4a3a66","#33294d","#1f1933"],
+  thesis:"The closest big mountain and the liveliest scene. The value house here is the best deal of the three areas, but the terrain is harder and the weekend lines are long.",
+  stats:[["2-day lift",'$246'],["Rentals","~$115"],["Drive","2h30"],["Summit","3,200 ft"],["Vertical","1,600 ft"],["Trails","67"]],
+  bull:["Liveliest après and the youngest crowd in the Catskills","Biggest vertical of the three; Epic Pass works here","Tickets are refundable until 5 PM on the last day","Lake-view house is the best value lodging we found"],
+  bear:["Weekend crowds and lift lines can be brutal","Blacks are steep and often icy, a big step up from low blues","Most of the friendly blues are on the West side and Hunter North"],
+  path:[["Fri","Shortest drive of the three, at the house by ~9:30."],["Sat","Start on Hunter North and the West side blues. Après at the base lodge."],["Sun","Try a black early if conditions are soft. Beat the Thruway home by leaving at 3:30."]],
+  events:[["Possible","Pride Ski & Ride Weekend fell on this weekend last year; 2027 TBA"]],
+  houses:[
+   {k:"lakeview",kind:"modern",name:"Lake and mountain-view house",town:"Hunter",tier:"Desk pick",pick:true,br:3,ba:"2.5",beds:7,rating:"4.96",rev:134,price:704,feat:"Views, fire pit, deck. A bed for everyone",fx:["lake","fire"],url:"https://www.airbnb.com/rooms/25052501"},
+   {k:"aframe",kind:"aframe",name:"Ski-in/ski-out A-frame",town:"Lanesville",tier:"Value",br:3,ba:"1",beds:5,rating:"4.78",rev:45,price:717,feat:"Listed as ski-in/ski-out, mountain views. One bathroom for six",fx:["lift"],url:"https://www.airbnb.com/rooms/1039887463932722789"},
+   {k:"pool",kind:"house",name:"4-bedroom with pool",town:"Tannersville",tier:"Value",br:4,ba:"2.5",beds:5,rating:"4.96",rev:24,price:738,feat:"Onsite pool, balcony, BBQ. Closest to Tannersville bars",fx:["pool"],url:"https://www.airbnb.com/rooms/1587084312701654227"},
+   {k:"theater",kind:"house",name:"Walk-to-slopes, home theater",town:"Lanesville",tier:"Sweet spot",br:3,ba:"2",beds:4,rating:"5.0",rev:20,price:941,feat:"Walk to the lifts, movie room. 4 beds, so some sharing",fx:["lift"],url:"https://www.airbnb.com/rooms/1524610542906361462"},
+   {k:"spa",kind:"modern",name:"Spa house with Hunter views",town:"Hunter",tier:"Splurge",br:5,ba:"3",beds:6,rating:"4.95",rev:80,price:1777,feat:"10-person spa, views of the mountain",fx:["tub"],url:"https://www.airbnb.com/rooms/41818269"}
+  ]},
+ {id:"WND", name:"Windham", where:"Windham, NY · Greene County", ticket:310, rent:150, rentNote:"Estimate; 2026–27 rental rates not posted yet",
+  badge:["prem","Premium"], sky:["#173a5c","#9fd8ff"], ridge:["#2d5574","#1f405c","#142c42"],
+  thesis:"Polished and well groomed, with the best regular Saturday après. You pay about $80–130 more per person than the others for similar houses.",
+  stats:[["2-day lift",'$310'],["Rentals","~$150"],["Drive","2h40"],["Summit","3,100 ft"],["Vertical","1,600 ft"],["Trails","54"]],
+  bull:["Excellent grooming; lots of blues and mellow blacks","Saturday après: DJ on the patio 1–4 PM, then live music 4–7 PM","Shorter lift lines than Hunter"],
+  bear:["Most expensive mountain, about $65 more per person on tickets alone","Upscale members-club feel; food and drinks cost more"],
+  path:[["Fri","At the house by ~9:45."],["Sat","Groomers all morning, then the patio DJ at 1 and live music at 4."],["Sun","Mellow blacks are a good first try. Out by 3:30."]],
+  events:[["Weekly","Saturday après: DJ 1–4 PM, live music 4–7 PM"],["Possible","Annual fundraiser concert was Jan 24 last year"]],
+  houses:[
+   {k:"woodland",kind:"cottage",name:"Woodland cottage",town:"Windham",tier:"Value",br:3,ba:"1",beds:4,rating:"5.0",rev:26,price:675,feat:"Fireplace, quiet woods. One bathroom, 4 beds",fx:["fire"],url:"https://www.airbnb.com/rooms/1261633910743829383"},
+   {k:"townhouse",kind:"townhouse",name:"Pond-view townhouse",town:"Windham",tier:"Value",br:3,ba:"2",beds:4,rating:"4.96",rev:25,price:795,feat:"Fireplace, shared pool, pond deck",fx:["pool","fire"],url:"https://www.airbnb.com/rooms/990718203812868810"},
+   {k:"hottub",kind:"house",name:"Private hot tub house",town:"Windham",tier:"Desk pick",pick:true,br:3,ba:"2",beds:5,rating:"5.0",rev:19,price:971,feat:"Private hot tub, fireplace, tennis court",fx:["tub","fire"],url:"https://www.airbnb.com/rooms/1368907569296787646"},
+   {k:"mtnview",kind:"chalet",name:"Mountain-view hot tub home",town:"Windham",tier:"Step up",br:4,ba:"2.5",beds:6,rating:"4.89",rev:152,price:1180,feat:"Hot tub, mountain views, fire pit",fx:["tub","fire"],url:"https://www.airbnb.com/rooms/21607947"},
+   {k:"gameroom",kind:"chalet",name:"Chalet with game room",town:"Windham",tier:"Splurge",br:4,ba:"2",beds:4,rating:"5.0",rev:54,price:2192,feat:"Hot tub, game room, big views",fx:["tub"],url:"https://www.airbnb.com/rooms/52234256"}
+  ]}
+];
+const TAGS=[["apres","Après scene"],["tub","Hot tub at the house"],["black","First black diamond"],["cheap","Cheapest possible"],["skiin","Ski-in/ski-out"],["cook","Cook a big dinner in"],["bars","Bars in town"],["drive","Shortest drive"]];
+const RISK={flat:"Blues only",small:"Maybe one run",long:"Send it"};
+const N=6;
+
+
+/* ---------- art ---------- */
+function rng(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+function heroSVG(r,seed){
+  const rand=rng(seed);const W=1200,H=250;
+  const ridge=(base,amp,col,n)=>{let p=`M0 ${H} L0 ${base}`;for(let i=0;i<=n;i++){const x=i*W/n;const y=base-amp*(0.35+0.65*Math.abs(Math.sin(i*1.7+seed)))*(0.6+rand()*0.6);p+=` L${x.toFixed(0)} ${y.toFixed(0)}`}return `<path d="${p} L${W} ${H} Z" fill="${col}"/>`};
+  let stars="";for(let i=0;i<40;i++)stars+=`<circle cx="${(rand()*W).toFixed(0)}" cy="${(rand()*110).toFixed(0)}" r="${(rand()*1.3+.3).toFixed(1)}" fill="#fff" opacity="${(rand()*.6+.2).toFixed(2)}"/>`;
+  // main peak with trails
+  const peakX=W*0.62,peakY=48;
+  const main=`<path d="M${peakX-430} ${H} L${peakX-140} 120 L${peakX-40} 70 L${peakX} ${peakY} L${peakX+60} 78 L${peakX+190} 112 L${peakX+470} ${H} Z" fill="${r.ridge[1]}"/>`;
+  const snow=`<path d="M${peakX-40} 70 L${peakX} ${peakY} L${peakX+60} 78 L${peakX+30} 92 L${peakX+5} 80 L${peakX-20} 96 Z" fill="#eaf3fb"/>`;
+  let trails="";const cols=["#eaf3fb","#eaf3fb","#cfe3f3"];
+  for(let t=0;t<5;t++){let x=peakX-30+t*18,y=peakY+18;let d=`M${x} ${y}`;for(let k=0;k<6;k++){x+=(rand()-.5)*70+(t-2)*14;y+=34;d+=` Q${x+(rand()-.5)*40} ${y-17} ${x} ${y}`}trails+=`<path d="${d}" stroke="${cols[t%3]}" stroke-width="${(2.2+rand()*1.5).toFixed(1)}" fill="none" opacity=".55" stroke-linecap="round"/>`}
+  // chairlift
+  const lx1=peakX-260,ly1=H-10,lx2=peakX-20,ly2=peakY+30;
+  let lift=`<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="#0b1320" stroke-width="1.5" opacity=".7"/>`;
+  for(let i=1;i<6;i++){const x=lx1+(lx2-lx1)*i/6,y=ly1+(ly2-ly1)*i/6;lift+=`<line x1="${x}" y1="${y}" x2="${x}" y2="${y+9}" stroke="#0b1320" stroke-width="1.2"/><rect x="${x-5}" y="${y+9}" width="10" height="4" rx="1" fill="#0b1320"/>`}
+  let trees="";for(let i=0;i<70;i++){const x=rand()*W,y=H-rand()*48,s=6+rand()*10;trees+=`<path d="M${x} ${y-s*1.8} L${x-s*.6} ${y} L${x+s*.6} ${y} Z" fill="#0b1726"/>`}
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of ${esc(r.name)} at dusk">
+  <defs><linearGradient id="sky${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${r.sky[0]}"/><stop offset="1" stop-color="${r.sky[1]}"/></linearGradient>
+  <linearGradient id="fade${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#0c131d" stop-opacity="0"/><stop offset="1" stop-color="#0c131d" stop-opacity=".85"/></linearGradient></defs>
+  <rect width="${W}" height="${H}" fill="url(#sky${seed})"/>${stars}
+  ${ridge(150,70,r.ridge[0],14)}${main}${snow}${trails}${lift}${ridge(215,40,r.ridge[2],22)}${trees}
+  <rect width="${W}" height="${H}" fill="url(#fade${seed})"/></svg>`;
+}
+function houseSVG(h,i){
+  const W=300,H=132,c=["#2d4a6b","#3b2f55","#244a4f","#4a3a2a","#2a3f5f"][i%5];
+  const sky=`<rect width="${W}" height="${H}" fill="#152338"/><path d="M0 ${H} L0 92 L60 70 L120 88 L190 58 L250 84 L300 72 L300 ${H} Z" fill="#1d3049"/><rect y="104" width="${W}" height="28" fill="#dfeaf5"/>`;
+  const win=(x,y,w,hh)=>`<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="1.5" fill="#ffd27a" opacity=".9"/>`;
+  let b="";
+  switch(h.kind){
+    case "aframe": b=`<path d="M110 106 L150 36 L190 106 Z" fill="${c}"/><path d="M104 108 L150 28 L196 108" stroke="#eaf3fb" stroke-width="6" fill="none"/>${win(140,70,20,22)}${win(140,95,20,11)}`;break;
+    case "chalet": b=`<rect x="92" y="62" width="116" height="44" fill="${c}"/><path d="M80 66 L150 26 L220 66 Z" fill="#eaf3fb"/><path d="M86 66 L150 32 L214 66 Z" fill="#5a3b2a"/>${win(104,74,18,16)}${win(141,74,18,16)}${win(178,74,18,16)}<rect x="96" y="92" width="108" height="3" fill="#5a3b2a"/>`;break;
+    case "barn": b=`<path d="M100 106 L100 60 L125 40 L175 40 L200 60 L200 106 Z" fill="#7a3434"/><path d="M96 62 L125 36 L175 36 L204 62" stroke="#eaf3fb" stroke-width="5" fill="none"/><path d="M135 106 L135 76 L165 76 L165 106" fill="#4a1f1f"/><path d="M135 76 L165 106 M165 76 L135 106" stroke="#eaf3fb" stroke-width="2"/>${win(142,50,16,12)}`;break;
+    case "cottage": b=`<rect x="105" y="66" width="90" height="40" fill="${c}"/><path d="M96 70 L150 38 L204 70 Z" fill="#eaf3fb"/><rect x="172" y="40" width="10" height="22" fill="#5b4a3a"/>${win(115,76,18,14)}${win(167,76,18,14)}<rect x="142" y="82" width="16" height="24" fill="#3a2a1f"/>`;break;
+    case "townhouse": b=`<rect x="70" y="60" width="52" height="46" fill="${c}"/><rect x="124" y="54" width="52" height="52" fill="#34506f"/><rect x="178" y="60" width="52" height="46" fill="${c}"/><path d="M66 62 L96 40 L126 62 M120 56 L150 34 L180 56 M174 62 L204 40 L234 62" stroke="#eaf3fb" stroke-width="5" fill="none"/>${win(84,72,24,14)}${win(138,68,24,14)}${win(192,72,24,14)}`;break;
+    case "modern": b=`<rect x="80" y="64" width="140" height="42" fill="${c}"/><path d="M74 66 L200 40 L226 52 L226 66 Z" fill="#eaf3fb"/>${win(92,74,36,22)}${win(134,74,36,22)}<rect x="178" y="74" width="30" height="32" fill="#1b2a3c"/>`;break;
+    case "cabin": b=`<rect x="100" y="64" width="100" height="42" fill="#6b4a2f"/>${[0,1,2,3,4].map(k=>`<line x1="100" y1="${70+k*8}" x2="200" y2="${70+k*8}" stroke="#4d3420" stroke-width="2"/>`).join("")}<path d="M90 68 L150 34 L210 68 Z" fill="#eaf3fb"/>${win(116,76,20,16)}${win(164,76,20,16)}`;break;
+    default: b=`<rect x="95" y="62" width="110" height="44" fill="${c}"/><path d="M86 66 L150 32 L214 66 Z" fill="#eaf3fb"/>${win(108,74,20,16)}${win(140,74,20,16)}${win(172,74,20,16)}`;
+  }
+  let fx="";
+  if(h.fx.includes("fire")) fx+=`<g transform="translate(244 104)"><path d="M-9 0 L9 0" stroke="#5b4a3a" stroke-width="3"/><path d="M0 -14 C6 -8 4 -3 0 -1 C-4 -3 -6 -8 0 -14Z" fill="#ff9a3c"/><path d="M0 -8 C3 -5 2 -2 0 -1 C-2 -2 -3 -5 0 -8Z" fill="#ffe08a"/></g>`;
+  if(h.fx.includes("tub")) fx+=`<g transform="translate(40 100)"><rect x="-16" y="-4" width="32" height="10" rx="4" fill="#3a6f8f"/><path d="M-8 -8 q3 -6 0 -12 M0 -8 q3 -6 0 -12 M8 -8 q3 -6 0 -12" stroke="#cfe3f3" stroke-width="1.6" fill="none" opacity=".8"/></g>`;
+  if(h.fx.includes("sauna")) fx+=`<g transform="translate(46 98)"><rect x="-14" y="-12" width="28" height="18" rx="9" fill="#8a5a33"/><path d="M-4 -16 q3 -5 0 -10 M5 -16 q3 -5 0 -10" stroke="#cfe3f3" stroke-width="1.6" fill="none" opacity=".8"/></g>`;
+  if(h.fx.includes("pool")) fx+=`<rect x="22" y="110" width="50" height="10" rx="3" fill="#4fb3d9"/>`;
+  if(h.fx.includes("lake")) fx+=`<ellipse cx="48" cy="117" rx="40" ry="7" fill="#5c8fb3"/>`;
+  if(h.fx.includes("lift")) fx+=`<line x1="0" y1="30" x2="300" y2="8" stroke="#0b1320" stroke-width="1.4"/><line x1="230" y1="14" x2="230" y2="24" stroke="#0b1320"/><rect x="224" y="24" width="12" height="4" fill="#0b1320"/>`;
+  let flakes="";const rand=rng(i*97+h.price);for(let k=0;k<18;k++)flakes+=`<circle cx="${(rand()*W).toFixed(0)}" cy="${(rand()*100).toFixed(0)}" r="${(rand()*1.4+.5).toFixed(1)}" fill="#fff" opacity=".7"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${sky}${b}${fx}${flakes}</svg>`;
+}
+
+
+const EXTRA={
+ BLY:{map:"https://www.belleayre.com/the-mountain/trail-map",tickets:"https://www.belleayre.com/tickets/lift-tickets/",short:"Best fit for our level",
+   why:["Long, wide groomed blues you can lap all day","Gentle first blacks and a separate warm-up area","Cheapest of the three, lighter crowds than Hunter"],
+   watch:["Quiet après; dinner and drinks are in Phoenicia","Weekend tickets are online only and can sell out"]},
+ HNT:{map:"https://www.huntermtn.com/the-mountain/about-the-mountain/trail-map.aspx",tickets:"https://www.huntermtn.com/plan-your-trip/lift-access/tickets.aspx",short:"Best scene, harder terrain",
+   why:["Liveliest après and youngest crowd","Closest drive and the best-value house we found","Refundable lift tickets"],
+   watch:["Weekend crowds and long lift lines","Blacks are steep and icy, a big jump from low blues"]},
+ WND:{map:"https://www.windhammountainclub.com/maps/",tickets:"https://www.windhammountainclub.com/lift-tickets/",short:"Most polished, most expensive",
+   why:["Excellent grooming with mellow blacks","Saturday après: DJ 1–4 PM, then live music","Shorter lines than Hunter"],
+   watch:["$80–130 more per person than the others","Upscale vibe, pricier food and drinks"]}
+};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pp=h=>Math.round(h.price/N);
+const fmt=n=>"$"+n.toLocaleString("en-US");
+let state={conv:{BLY:7,HNT:5,WND:3},house:{BLY:"chalet",HNT:"lakeview",WND:"hottub"},limit:600,risk:"small",gear:"rent",tags:[],nick:"",memo:""};
+let cur="BLY",votes=[],db=null,user=null,myId=null,canWrite=true,sentOnce=false,names={};
+
+
+function deskTotal(r){return r.ticket+r.rent+pp(r.houses.find(x=>x.pick))}
+
+function renderTape(){
+  const base=deskTotal(R[0]);
+  const it=R.map(r=>{const t=deskTotal(r),d=t-base;return `<span><b>${r.id}</b> ${fmt(t)}/pp ${d===0?'<span>ref</span>':`<span class="${d<0?"up":"dn"}">${d<0?"▼":"▲"} ${fmt(Math.abs(d))}</span>`}</span>`});
+  const s=it.concat([`<span><b>DEPART</b> Fri 18:00</span>`,`<span><b>RETURN</b> Sun ~19:00</span>`,`<span><b>SNOW</b> check Thursday</span>`]).join("");
+  $("#tape").innerHTML=s+s;
+}
+function renderPicker(){
+  $("#picker").innerHTML=R.map((r,i)=>`<button class="mt" role="tab" aria-selected="${r.id===cur}" data-id="${r.id}">
+    <div class="art">${heroSVG(r,i+11)}</div>
+    <div class="b"><div class="top"><span class="label">${r.id}</span><span class="tag ${r.badge[0]}">${r.badge[1]}</span></div>
+    <h3>${r.name}</h3><span style="color:var(--muted);font-size:14.5px">${EXTRA[r.id].short}</span>
+    <span class="price">from <b>${fmt(deskTotal(r))}</b> /pp</span></div></button>`).join("");
+  document.querySelectorAll(".mt").forEach(b=>b.onclick=()=>{cur=b.dataset.id;renderPicker();renderPros()});
+}
+function renderPros(){
+  const r=R.find(x=>x.id===cur),x=EXTRA[r.id],i=R.indexOf(r);
+  const st=Object.fromEntries(r.stats);
+  $("#pros").innerHTML=`
+  <div class="hero">${heroSVG(r,i+3)}<div class="cap"><h2>${r.name}</h2><span class="where">${r.where}</span></div></div>
+  <div class="pb">
+    <div class="headline">
+      <div class="big"><small class="label">All-in from</small><b>${fmt(deskTotal(r))}</b> <span>/ person</span></div>
+      <div class="mini"><div><small class="label">Drive</small><b>${st["Drive"]}</b></div><div><small class="label">Vertical</small><b>${st["Vertical"]}</b></div><div><small class="label">Trails</small><b>${st["Trails"]}</b></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn ghost sm" href="${x.map}" target="_blank" rel="noopener">Trail map ↗</a><a class="btn ghost sm" href="${x.tickets}" target="_blank" rel="noopener">Lift tickets ↗</a></div>
+    </div>
+    <p class="thesis">${r.thesis}</p>
+    <div class="why">
+      <div class="case bull"><h3><i style="background:var(--bid)"></i>Bull case</h3><ul>${r.bull.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+      <div class="case bear"><h3><i style="background:var(--ask)"></i>Bear case</h3><ul>${r.bear.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+    </div>
+    <div>
+      <div class="hh"><h3>Where we'd stay</h3><p>Per person, 2 nights. Pick one for your ticket.</p></div>
+      <div class="houses">${r.houses.map((h,k)=>{const on=state.house[r.id]===h.k;return `
+        <div class="house ${on?"on":""}">
+          ${houseSVG(h,k)}
+          <div class="hb">
+            <span class="tier ${h.pick?"pick":""}">${h.pick?"★ Desk pick":h.tier}</span>
+            <h4>${h.name}</h4>
+            <span class="meta">${h.town} · ${h.br} bd · ${h.ba} ba · ★ ${h.rating}</span>
+            <div class="price"><b>${fmt(pp(h))}</b><span>/ person</span></div>
+            <div class="acts"><button class="pickbtn" type="button" data-k="${h.k}" aria-pressed="${on}">${on?"Picked":"Pick"}</button><a class="ext" href="${h.url}" target="_blank" rel="noopener">Airbnb ↗</a></div>
+          </div>
+        </div>`}).join("")}</div>
+    </div>
+    <details>
+      <summary>Weekend plan, events and rental prices</summary>
+      <div class="more">
+        <div class="days">${r.path.map(p=>`<div><b>${p[0]}</b><p>${p[1]}</p></div>`).join("")}</div>
+        <ul class="evs">${r.events.map(e=>`<li><b>${e[0]}</b>${e[1]}</li>`).join("")}</ul>
+        <p style="margin:0;color:var(--muted);font-size:14.5px">Lift ticket ${fmt(r.ticket)} for 2 days. Rentals ~${fmt(r.rent)}: ${r.rentNote}.</p>
+      </div>
+    </details>
+  </div>`;
+  document.querySelectorAll(".pickbtn").forEach(b=>b.onclick=()=>{state.house[cur]=b.dataset.k;renderPros();renderPicks();dirty()});
+}
+function pct(c){const s=R.reduce((a,r)=>a+(+c[r.id]||0),0);const o={};R.forEach(r=>o[r.id]=s?Math.round(100*(+c[r.id]||0)/s):0);return o}
+function renderSliders(){
+  $("#sliders").innerHTML=R.map(r=>`<div class="sl"><span>${r.name}</span><input type="range" id="c-${r.id}" min="0" max="10" step="1" value="${state.conv[r.id]}" aria-label="${r.name} rating"><output id="o-${r.id}">${state.conv[r.id]}</output></div>`).join("");
+  R.forEach(r=>$("#c-"+r.id).oninput=e=>{state.conv[r.id]=+e.target.value;$("#o-"+r.id).textContent=e.target.value;dirty()});
+}
+function renderPicks(){
+  $("#picks").innerHTML=R.map(r=>{const h=r.houses.find(x=>x.k===state.house[r.id]);return `<div><span>${r.name}</span><b style="flex:1">${h?h.name:"—"}</b><em>${h?fmt(pp(h)):""}</em></div>`}).join("");
+}
+function renderSeg(id,key){document.querySelectorAll(`#${id} button`).forEach(b=>{b.setAttribute("aria-pressed",state[key]===b.dataset.v);b.onclick=()=>{state[key]=b.dataset.v;renderSeg(id,key);dirty()}})}
+function renderTags(){
+  $("#tags").innerHTML=TAGS.map(t=>`<button type="button" class="chip" data-t="${t[0]}" aria-pressed="${state.tags.includes(t[0])}">${t[1]}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const t=c.dataset.t;state.tags=state.tags.includes(t)?state.tags.filter(x=>x!==t):[...state.tags,t];c.setAttribute("aria-pressed",state.tags.includes(t));dirty()});
+}
+function syncInputs(){
+  renderSliders();$("#limit").value=state.limit;$("#limitOut").textContent=fmt(state.limit);
+  $("#nick").value=state.nick||"";$("#memo").value=state.memo||"";
+  renderSeg("risk","risk");renderTags();renderPicks();renderPros();
+}
+$("#limit").oninput=e=>{state.limit=+e.target.value;$("#limitOut").textContent=fmt(state.limit);dirty()};
+$("#nick").oninput=e=>{state.nick=e.target.value;dirty()};
+$("#memo").oninput=e=>{state.memo=e.target.value;dirty()};
+function setStatus(t,c){const s=$("#status");s.textContent=t;s.className="status"+(c?" "+c:"")}
+function dirty(){if(sentOnce)setStatus("You have unsent changes.")}
+
+async function renderBook(){
+  const v=votes.filter(x=>x.data&&x.data.conv);
+  $("#bookSub").textContent=`The book · ${v.length} of ${N} tickets in`;
+  if(!v.length){$("#book").innerHTML=`<p class="empty">No tickets yet. Be the first.</p>`;return}
+  if(!v.some(x=>x.id===myId)&&LS.get("ski27-voted")!=="1"){$("#book").innerHTML=`<div class="sealed"><b>Sealed until you vote</b><p>${v.length} ticket${v.length>1?"s are":" is"} in. Send yours to see where the group is leaning.</p><div class="who">${v.map(()=>`<span class="ghostp">●●●●</span>`).join("")}</div></div>`;return}
+  const agg={};R.forEach(r=>agg[r.id]=0);v.forEach(x=>{const p=pct(x.data.conv);R.forEach(r=>agg[r.id]+=p[r.id])});R.forEach(r=>agg[r.id]=Math.round(agg[r.id]/v.length));
+  const order=R.slice().sort((a,b)=>agg[b.id]-agg[a.id]);const lead=order[0];
+  const hv=R.map(r=>{const c={};v.forEach(x=>{const k=x.data.house&&x.data.house[r.id];if(k)c[k]=(c[k]||0)+1});const t=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];const h=t&&r.houses.find(y=>y.k===t[0]);return {r,h,n:t?t[1]:0}});
+  const lim=v.map(x=>+x.data.limit||0).filter(Boolean).sort((a,b)=>a-b);const med=lim.length?lim[Math.floor((lim.length-1)/2)]:null;
+  const rc={flat:0,small:0,long:0};v.forEach(x=>{if(rc[x.data.risk]!==undefined)rc[x.data.risk]++});
+  const tc={};v.forEach(x=>(x.data.tags||[]).forEach(t=>tc[t]=(tc[t]||0)+1));const top=TAGS.filter(t=>tc[t[0]]).sort((a,b)=>tc[b[0]]-tc[a[0]]).slice(0,3);
+  if(user&&user.profiles){try{const ps=await user.profiles(v.map(x=>x.id));v.forEach(x=>names[x.id]=(ps[x.id]&&ps[x.id].name)||"")}catch(e){}}
+  const nm=x=>esc((x.data.nick||"").trim()||names[x.id]||"Someone");
+  const lh=hv.find(o=>o.r.id===lead.id);
+  $("#book").innerHTML=`
+    <div class="lead"><span class="label">Leading</span><b>${lead.name}${lh&&lh.h?` · ${esc(lh.h.name)}`:""}</b></div>
+    ${order.map(r=>`<div class="bar"><span>${r.name}</span><div class="t"><i style="width:${agg[r.id]}%"></i></div><output>${agg[r.id]}%</output></div>`).join("")}
+    <div class="blk">
+      ${hv.map(o=>`<div class="kv"><span>${o.r.name} house</span><b>${o.h?esc(o.h.name)+` <span class="num" style="color:var(--muted)">×${o.n}</span>`:"—"}</b></div>`).join("")}
+      <div class="kv"><span>Median budget</span><b class="num">${med?fmt(med):"—"}</b></div>
+      <div class="kv"><span>Black diamond</span><b>${rc.long} send · ${rc.small} maybe · ${rc.flat} no</b></div>
+      ${top.length?`<div class="kv"><span>Top wants</span><b>${top.map(t=>t[1]).join(", ")}</b></div>`:""}
+    </div>
+    <div class="blk"><span class="label">Tickets in</span><div class="who">${v.map(x=>`<span>${nm(x)}</span>`).join("")}</div></div>
+    ${v.some(x=>(x.data.memo||"").trim())?`<div class="blk"><span class="label">Notes</span>${v.filter(x=>(x.data.memo||"").trim()).map(x=>`<p style="margin:6px 0;font-size:14.5px"><b>${nm(x)}:</b> <span style="color:#c9d5e3">${esc(x.data.memo)}</span></p>`).join("")}</div>`:""}`;
+}
+
+function ticketText(){
+  const L=[`Ski ticket${state.nick?" · "+state.nick:""}`,"Ratings: "+R.map(r=>r.name+" "+state.conv[r.id]+"/10").join(", ")];
+  R.forEach(r=>{const h=r.houses.find(x=>x.k===state.house[r.id]);L.push(`${r.name} house: ${h?h.name+" ("+fmt(pp(h))+"/pp)":"none"}`)});
+  L.push(`Max all-in: ${fmt(state.limit)}/pp`,`Black diamond: ${RISK[state.risk]}`);
+  if(state.tags.length)L.push("Wants: "+state.tags.map(t=>TAGS.find(x=>x[0]===t)[1]).join(", "));
+  if(state.memo.trim())L.push("Note: "+state.memo.trim());
+  return L.join("\n");
+}
+$("#copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(ticketText());setStatus("Copied. Paste it in the group chat.","ok")}catch(e){$("#memo").value=ticketText();setStatus("Couldn't copy automatically. Your ticket is in the note box; copy it from there.","err")}};
+// ===== CONFIG: paste your Apps Script web app URL here (see README) =====
+const API="https://script.google.com/macros/s/AKfycbyhugbNOYH37SFbcvu6xcFJ__IOXYaoBDsNsEVeWLKLuUuJFZol-d3kBNs3dK5CnWet/exec";
+// ========================================================================
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+myId=LS.get("ski27-id");if(!myId){myId="v"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);LS.set("ski27-id",myId)}
+const live=API.startsWith("https://");
+async function loadVotes(){
+  if(!live)return;
+  try{const r=await fetch(API,{cache:"no-store"});const j=await r.json();votes=(j.votes||[]).filter(v=>v&&v.id&&v.data);
+    const mine=votes.find(x=>x.id===myId);
+    if(mine&&!sentOnce){const d=mine.data;state={...state,conv:{...state.conv,...d.conv},house:{...state.house,...d.house},limit:d.limit||state.limit,risk:d.risk||state.risk,tags:d.tags||[],nick:d.nick||"",memo:d.memo||""};sentOnce=true;syncInputs();setStatus("Your ticket is in. Edit and resend to change it.","ok")}
+    renderBook();
+  }catch(e){setStatus("Couldn't load the results right now. Your ticket can still be sent.","err")}
+}
+$("#sendBtn").onclick=async()=>{
+  if(!live){setStatus("Voting isn't connected yet. Use Copy as text for now.","err");return}
+  if(!state.nick.trim()){setStatus("Add your name first.","err");$("#nick").focus();return}
+  $("#sendBtn").disabled=true;setStatus("Sending…");
+  const body={conv:{...state.conv},house:{...state.house},limit:state.limit,risk:state.risk,tags:[...state.tags],nick:state.nick.trim().slice(0,40),memo:state.memo.trim().slice(0,400),at:new Date().toISOString()};
+  try{
+    await fetch(API,{method:"POST",body:JSON.stringify({id:myId,data:body})}); // text/plain: no CORS preflight
+    sentOnce=true;LS.set("ski27-voted","1");setStatus("Ticket in. Resend any time to change it.","ok");
+    votes=votes.filter(x=>x.id!==myId).concat([{id:myId,data:body}]);renderBook();setTimeout(loadVotes,1500);
+  }catch(e){setStatus("Couldn't send. Check your connection and try again.","err")}
+  finally{$("#sendBtn").disabled=false}
+};
+renderTape();renderPicker();syncInputs();
+if(live){setStatus("Fill it in and send.");loadVotes();setInterval(loadVotes,30000)}
+else setStatus("Voting isn't connected yet. Copy as text works.");
+</script>
+</body>
+</html>
